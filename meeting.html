@@ -1,0 +1,129 @@
+<div class="min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 flex flex-col items-center px-4 py-6">
+
+  <!-- Header -->
+  <div class="text-center mb-6">
+    <h2 class="text-xl font-semibold text-white mb-3">Meeting Room</h2>
+    <div class="flex flex-wrap gap-2 justify-center">
+      <span class="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/10 text-gray-300 px-3 py-1.5 rounded-full text-xs font-medium">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        {{ candidateName }}
+      </span>
+      <span class="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/10 text-gray-300 px-3 py-1.5 rounded-full text-xs font-medium">
+        🏠 {{ roomId }}
+      </span>
+      <span class="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/10 text-gray-300 px-3 py-1.5 rounded-full text-xs font-medium">
+        👥 {{ provider.remoteParticipants().length + 1 }} in room
+      </span>
+    </div>
+  </div>
+
+  <!-- Video Grid -->
+  <div class="flex-1 w-full max-w-6xl mb-6 grid gap-4"
+       [ngClass]="provider.remoteParticipants().length === 0
+         ? 'grid-cols-1'
+         : provider.remoteParticipants().length <= 1
+           ? 'grid-cols-1 sm:grid-cols-2'
+           : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'">
+
+    <!-- ════════ LOCAL VIDEO (You) ════════ -->
+    <div class="relative aspect-video bg-gray-800/80 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+
+      <video
+        #localVideo
+        autoplay
+        playsinline
+        muted
+        class="w-full h-full object-cover"
+      ></video>
+
+      <!-- No Video Placeholder -->
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none"
+           [class.hidden]="provider.cameraEnabled">
+        <div class="text-center">
+          <div class="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mx-auto mb-2">
+            <span class="text-2xl">👤</span>
+          </div>
+          <p class="text-gray-500 text-sm">Camera is off</p>
+        </div>
+      </div>
+
+      <!-- Name Label -->
+      <div class="absolute bottom-3 left-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10">
+        {{ candidateName }} (You)
+      </div>
+    </div>
+
+    <!-- ════════ REMOTE PARTICIPANTS ════════ -->
+    @for (participant of provider.remoteParticipants(); track participant.identity) {
+      <div class="relative aspect-video bg-gray-800/80 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+
+        <!-- Remote Video Container -->
+        <div
+          class="w-full h-full"
+          #remoteVideoContainer
+          [attr.data-identity]="participant.identity">
+        </div>
+
+        <!-- No Video Placeholder for remote -->
+        @if (!participant.hasVideo) {
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="text-center">
+              <div class="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mx-auto mb-2">
+                <span class="text-2xl">👤</span>
+              </div>
+              <p class="text-gray-400 text-sm">{{ participant.identity }}</p>
+            </div>
+          </div>
+        }
+
+        <!-- Name Label -->
+        <div class="absolute bottom-3 left-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10 flex items-center gap-1.5">
+          @if (participant.hasAudio) {
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          }
+          {{ participant.identity }}
+        </div>
+      </div>
+    }
+
+  </div>
+
+  <!-- Controls Bar -->
+  <div class="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-gray-800/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg">
+
+    <button
+      (click)="camera()"
+      class="flex flex-col items-center gap-1 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer"
+      [ngClass]="provider.cameraEnabled ? 'bg-emerald-500 text-white shadow-lg' : 'bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white'">
+      <span class="text-lg">📷</span>
+      <span class="hidden sm:inline">Camera</span>
+    </button>
+
+    <button
+      (click)="microphone()"
+      class="flex flex-col items-center gap-1 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer"
+      [ngClass]="provider.microphoneEnabled ? 'bg-emerald-500 text-white shadow-lg' : 'bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white'">
+      <span class="text-lg">🎤</span>
+      <span class="hidden sm:inline">Mic</span>
+    </button>
+
+    <button
+      (click)="shareScreen()"
+      class="flex flex-col items-center gap-1 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer"
+      [ngClass]="provider.screenSharing ? 'bg-blue-500 text-white shadow-lg' : 'bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white'">
+      <span class="text-lg">🖥️</span>
+      <span class="hidden sm:inline">Screen</span>
+    </button>
+
+    <div class="w-px h-8 bg-white/10 mx-1"></div>
+
+    <button
+      (click)="leave()"
+      class="flex flex-col items-center gap-1 px-3 sm:px-5 py-2.5 rounded-xl text-xs font-medium bg-red-600 text-white hover:bg-red-500 shadow-lg transition-all duration-200 cursor-pointer active:scale-95">
+      <span class="text-lg">📞</span>
+      <span class="hidden sm:inline">Leave</span>
+    </button>
+
+  </div>
+
+</div>
